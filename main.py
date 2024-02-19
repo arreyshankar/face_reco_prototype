@@ -5,7 +5,7 @@ from PIL import ImageGrab
 import os
 from datetime import datetime
 
-path = 'C:/Users/sarvesh/Desktop/face_reco_prototype/Training_images'
+path = 'C:/Users/sarvesh/Desktop/face_reco_prototype/Images'
 images = []
 classNames = []
 myList = os.listdir(path)

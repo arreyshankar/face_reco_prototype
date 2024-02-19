@@ -2,7 +2,7 @@ import tkinter as tk
 import tkinter.messagebox
 import cv2
 
-path = "C:/Users/sarvesh/Desktop/face_reco_prototype/Training_images"
+path = "C:/Users/sarvesh/Desktop/face_reco_prototype/Images"
 window = tk.Tk()
 imageTitle = tk.StringVar()
 
@@ -44,7 +44,7 @@ def imageCapture():
         elif k%256 == 32:
             # SPACE pressed
             img_name = str(imageTitle.get())+"_{}.png".format(img_counter)
-            cv2.imwrite("./Training_images/"+img_name, frame)
+            cv2.imwrite("./Images/"+img_name, frame)
             print("{} saved ".format(img_name))
             img_counter += 1
 
