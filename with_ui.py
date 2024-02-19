@@ -1,8 +1,18 @@
 import tkinter as tk
 import tkinter.messagebox
+#from __future__ import print_function
+from PIL import Image
+from PIL import ImageTk
+import csv
+import threading
+import datetime
+import imutils
 import cv2
+import os
 
+cam = cv2.VideoCapture(0)
 path = "C:/Users/sarvesh/Desktop/face_reco_prototype/Images"
+records_path = "C:/Users/sarvesh/Desktop/face_reco_prototype/Records.csv"
 window = tk.Tk()
 imageTitle = tk.StringVar()
 
@@ -20,12 +30,16 @@ def main():
     register.pack(side=tk.LEFT)
 
     frame2 = tk.Frame(master=window, width=250, bg="#5CAD4B")
-    frame2.pack(fill=tk.BOTH, side=tk.LEFT, expand=True) 
+    frame2.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
+    textView2 = tk.Label(master=frame2,text="Get Patient Details")
+    textView2.pack(side=tk.LEFT,padx=10)
+    getDetailsButton = tk.Button(master=frame2,text="Get Details",command=getDetails)
+    getDetailsButton.pack(side=tk.LEFT,padx=10) 
     window.mainloop()
 
 
 def imageCapture():
-    cam = cv2.VideoCapture(0)
+   
     cv2.namedWindow("Press Space to Capture and ESC to quit")
     img_counter = 0
 
@@ -51,6 +65,19 @@ def imageCapture():
     cam.release()
     cv2.destroyAllWindows()
 
+
+def getDetails():
+    image1 = Image.open("./Images/sarvesh_0.png")   
+    test = ImageTk.PhotoImage(image1)
+    label1 = tk.Label(image=test,master=window)
+    label1.image = test
+    label1.pack(side=tk.TOP)
+    
+    with open(records_path, mode='r', encoding='utf-8') as f:
+        reader = csv.DictReader(f, delimiter=',')
+        for row in reader:
+            #if 
+            print([col + '=' + row[col] for col in reader.fieldnames])
 
 if __name__ == "__main__":
     main()
