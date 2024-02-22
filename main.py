@@ -2,6 +2,7 @@ import tkinter as tk
 import pandas as pd
 import numpy as np
 import re
+import pymongo
 import tkinter.messagebox
 import face_recognition
 from PIL import Image
@@ -14,6 +15,9 @@ import cv2
 import os
 
 
+client = pymongo.MongoClient("mongodb://localhost:27017/")
+database = client['mevo']
+collection = database['records']
 cam = cv2.VideoCapture(0)
 path = "C:/Users/sarvesh/Desktop/face_reco_prototype/Images"
 records_path = "C:/Users/sarvesh/Desktop/face_reco_prototype/Records.csv"
@@ -45,9 +49,17 @@ print('Encoding Complete')
 def readRecord(name):
     id = re.findall(r'\d+',name)
     id = int(id[0])
-    df = pd.read_csv(records_path)
-    result = df[df["id"] == id]
-    tkinter.messagebox.showinfo("Details",""+str(result))
+    
+    result = collection.find_one({'id':int(id)})
+    
+    #df = pd.read_csv(records_path)
+    #result = df[df["id"] == id]
+    
+    Pid = result['id']
+    PName = result['Name']
+    PAge = result['Age']
+    pGender = result['Gender']
+    tkinter.messagebox.showinfo("Details",""+str(Pid)+"\t"+PName+"\t"+str(PAge)+"\t"+pGender)
     
 def getDetails():
     cam = cv2.VideoCapture(0)
@@ -76,8 +88,8 @@ def getDetails():
         k = cv2.waitKey(3000) & 0xff 
         if k == 27:
             break
-        readRecord(imgname)
     cam.release()
+    readRecord(imgname)
     
 
 def GUI_init():
@@ -108,28 +120,21 @@ def GUI_init():
     getDetailsButton.pack(side=tk.LEFT,padx=10) 
     window.mainloop()
 
-def getLineCount():
-    with open(records_path,"+r") as records:
-        csv_reader = csv.reader(records, delimiter=',')
-        line_count = 0
-        for row in csv_reader:
-            if line_count == 0:
-                line_count += 1
-            else:
-                line_count += 1
-        return line_count
-
 def writeRecord(id,name,age,gender):
-    with open(records_path, mode='a', newline='') as records:
-        records.write('\n')
-        writer = csv.writer(records, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-        writer.writerow([id, name, age, gender])
+    
+    record = {'id':id , 'Name':name , 'Age':int(age) , 'Gender':gender}
+    collection.insert_one(record)
+    
+    #with open(records_path, mode='a', newline='') as records:
+    #    records.write('\n')
+    #    writer = csv.writer(records, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+    #    writer.writerow([id, name, age, gender])
 
 def registeration():
     cam = cv2.VideoCapture(0)
     cv2.namedWindow("Press Space to Capture and ESC to quit")
     img_counter = 0
-    id = getLineCount()
+    id = collection.count_documents({})+1
     name = Name.get()
     age = Age.get()
     gender = Gender.get()
