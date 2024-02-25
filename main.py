@@ -1,16 +1,9 @@
 import tkinter as tk
-import pandas as pd
 import numpy as np
 import re
 import pymongo
 import tkinter.messagebox
 import face_recognition
-from PIL import Image
-from PIL import ImageTk
-import csv
-import threading
-import datetime
-import imutils
 import cv2
 import os
 
@@ -19,8 +12,9 @@ client = pymongo.MongoClient("mongodb://localhost:27017/")
 database = client['mevo']
 collection = database['records']
 cam = cv2.VideoCapture(0)
+cam.set(cv2.CAP_PROP_FPS,60)
+cam.set(cv2.CAP_PROP_BUFFERSIZE,30)
 path = "C:/Users/sarvesh/Desktop/face_reco_prototype/Images"
-records_path = "C:/Users/sarvesh/Desktop/face_reco_prototype/Records.csv"
 window = tk.Tk()
 Name = tk.StringVar()
 Age = tk.StringVar()
@@ -52,14 +46,11 @@ def readRecord(name):
     
     result = collection.find_one({'id':int(id)})
     
-    #df = pd.read_csv(records_path)
-    #result = df[df["id"] == id]
-    
     Pid = result['id']
     PName = result['Name']
     PAge = result['Age']
     pGender = result['Gender']
-    tkinter.messagebox.showinfo("Details",""+str(Pid)+"\t"+PName+"\t"+str(PAge)+"\t"+pGender)
+    tkinter.messagebox.showinfo("Details","ID: "+str(Pid)+"\nName: "+PName+"\nAge: "+str(PAge)+"\nGender: "+pGender)
     
 def getDetails():
     cam = cv2.VideoCapture(0)
@@ -79,10 +70,11 @@ def getDetails():
 
             if matches[matchIndex]:
                 imgname = classNames[matchIndex]
+                Name = ''.join(re.findall(r"([a-zA-Z])",imgname))
                 y1, x2, y2, x1 = faceLoc
                 y1, x2, y2, x1 = y1 * 4, x2 * 4, y2 * 4, x1 * 4
-                cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                cv2.putText(img, imgname, (x1 + 6, y2 - 6), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 1)        
+                cv2.rectangle(img, (x1, y1), (x2, y2), (0, 0, 255), 1)
+                cv2.putText(img, Name, (x1 + 6, y2 - 6), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 1)        
     
         cv2.imshow('Webcam', img)
         k = cv2.waitKey(3000) & 0xff 
@@ -124,11 +116,7 @@ def writeRecord(id,name,age,gender):
     
     record = {'id':id , 'Name':name , 'Age':int(age) , 'Gender':gender}
     collection.insert_one(record)
-    
-    #with open(records_path, mode='a', newline='') as records:
-    #    records.write('\n')
-    #    writer = csv.writer(records, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-    #    writer.writerow([id, name, age, gender])
+
 
 def registeration():
     cam = cv2.VideoCapture(0)
