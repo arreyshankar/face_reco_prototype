@@ -1,5 +1,6 @@
 import tkinter as tk
 import numpy as np
+from pymongo.server_api import ServerApi
 import re
 import pymongo
 import tkinter.messagebox
@@ -7,8 +8,8 @@ import face_recognition
 import cv2
 import os
 
-
-client = pymongo.MongoClient("mongodb://localhost:27017/")
+uri = "mongodb+srv://sarvesh:mevo123@testingcluster.tg9uqrx.mongodb.net/?retryWrites=true&w=majority&appName=TestingCluster"
+client = pymongo.MongoClient(uri,server_api=ServerApi('1'))
 database = client['mevo']
 collection = database['records']
 cam = cv2.VideoCapture(0)
@@ -82,7 +83,6 @@ def getDetails():
             break
     cam.release()
     readRecord(imgname)
-    
 
 def GUI_init():
     window.minsize(800,600)
@@ -117,7 +117,6 @@ def writeRecord(id,name,age,gender):
     record = {'id':id , 'Name':name , 'Age':int(age) , 'Gender':gender}
     collection.insert_one(record)
 
-
 def registeration():
     cam = cv2.VideoCapture(0)
     cv2.namedWindow("Press Space to Capture and ESC to quit")
@@ -149,6 +148,5 @@ def registeration():
     cam.release()
     cv2.destroyAllWindows()
 
-    
 if __name__ == "__main__":
     GUI_init()
