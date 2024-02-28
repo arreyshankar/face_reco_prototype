@@ -22,6 +22,7 @@ Name = tk.StringVar()
 Age = tk.StringVar()
 Gender = tk.StringVar()
 
+encodeList = []
 Images = []
 pIds = []
 pNames = []
@@ -29,28 +30,24 @@ pAges =[]
 pGenders = []
 pImages = []
 
-for document in record_collection.find():
-    pIds.append(document['_id'])
-    pNames.append(document['Name'])
-    pAges.append(document['Age'])
-    pGenders.append(document['Gender'])
-    pImages.append(document['Image'])
 
-def getImages():
+def init_encoding():
+    for document in record_collection.find():
+        pIds.append(document['_id'])
+        pNames.append(document['Name'])
+        pAges.append(document['Age'])
+        pGenders.append(document['Gender'])
+        pImages.append(document['Image'])
+
     for image in pImages:
         nparr = np.frombuffer(image, np.uint8)
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
         Images.append(img)
 
-getImages()
-
-def findEncodings(Images):
-    encodeList = []
     for img in Images:
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         encode = face_recognition.face_encodings(img)[0]
         encodeList.append(encode)
-    return encodeList
 
 def readRecord(id):
     result = record_collection.find_one({'_id':int(id)})
@@ -67,6 +64,7 @@ def readRecord(id):
     tkinter.messagebox.showinfo("Details","\nID: "+str(Pid)+"\nName: "+PName+"\nAge: "+str(PAge)+"\nGender: "+pGender)
     
 def getDetails():
+    init_encoding()
     cam = cv2.VideoCapture(0)
     imgname = ''
     while True:
@@ -78,8 +76,8 @@ def getDetails():
         encodesCurFrame = face_recognition.face_encodings(imgS, facesCurFrame)
 
         for encodeFace, faceLoc in zip(encodesCurFrame, facesCurFrame):
-            matches = face_recognition.compare_faces(encodeListKnown, encodeFace)
-            faceDis = face_recognition.face_distance(encodeListKnown, encodeFace)
+            matches = face_recognition.compare_faces(encodeList, encodeFace)
+            faceDis = face_recognition.face_distance(encodeList, encodeFace)
             matchIndex = np.argmin(faceDis)
 
             if matches[matchIndex]:
@@ -151,11 +149,12 @@ def registeration():
         elif k%256 == 32:
             _, image_data = cv2.imencode('.jpg', frame)
             image_binary = Binary(image_data.tobytes())
-
-    writeRecord(id,name,age,gender,image_binary)
-    tkinter.messagebox.showinfo("Alert","Registration Successfull")
+            writeRecord(id,name,age,gender,image_binary)
+            tkinter.messagebox.showinfo("Alert","Registration Successfull")
+    
     cam.release()
     cv2.destroyAllWindows()
 
 if __name__ == "__main__":
+    init_encoding()
     GUI_init()
