@@ -14,7 +14,6 @@ uri = "mongodb+srv://sarvesh:mevo123@testingcluster.tg9uqrx.mongodb.net/?retryWr
 client = pymongo.MongoClient(uri,server_api=ServerApi('1'))
 database = client['mevo']
 record_collection = database['records']
-images_collection = database['images']
 cam = cv2.VideoCapture(0)
 cam.set(cv2.CAP_PROP_FPS,60)
 cam.set(cv2.CAP_PROP_BUFFERSIZE,30)
@@ -24,30 +23,43 @@ Name = tk.StringVar()
 Age = tk.StringVar()
 Gender = tk.StringVar()
 
-images = []
-classNames = []
-myList = os.listdir(path)
-for cl in myList:
-    curImg = cv2.imread(f'{path}/{cl}')
-    images.append(curImg)
-    classNames.append(os.path.splitext(cl)[0])
-    
-def findEncodings(images):
-    encodeList = []
+Images = []
+pIds = []
+pNames = []
+pAges =[]
+pGenders = []
+pImages = []
 
-    for img in images:
+for document in record_collection.find():
+    pIds.append(document['_id'])
+    pNames.append(document['Name'])
+    pAges.append(document['Age'])
+    pGenders.append(document['Gender'])
+    pImages.append(document['Image'])
+
+
+def getImages():
+    for image in pImages:
+        nparr = np.frombuffer(image, np.uint8)
+        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        Images.append(img)
+
+getImages()
+
+
+
+def findEncodings(Images):
+    encodeList = []
+    for img in Images:
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         encode = face_recognition.face_encodings(img)[0]
         encodeList.append(encode)
     return encodeList
 
-encodeListKnown = findEncodings(images)
+encodeListKnown = findEncodings(Images)
 print('Encoding Complete')
 
-def readRecord(name):
-    id = re.findall(r'\d+',name)
-    id = int(id[0])
-    
+def readRecord(id):
     result = record_collection.find_one({'_id':int(id)})
     
     Pid = result['_id']
@@ -55,8 +67,11 @@ def readRecord(name):
     PAge = result['Age']
     pGender = result['Gender']
     pImage = result['Image']
+    nparr = np.frombuffer(pImage, np.uint8)
+    image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    imgS = cv2.resize(image, (0, 0), None, 0.25, 0.25)
+    imgS = cv2.cvtColor(imgS, cv2.COLOR_BGR2RGB)
     tkinter.messagebox.showinfo("Details","\nID: "+str(Pid)+"\nName: "+PName+"\nAge: "+str(PAge)+"\nGender: "+pGender)
-
     
 def getDetails():
     cam = cv2.VideoCapture(0)
@@ -75,8 +90,8 @@ def getDetails():
             matchIndex = np.argmin(faceDis)
 
             if matches[matchIndex]:
-                imgname = classNames[matchIndex]
-                Name = ''.join(re.findall(r"([a-zA-Z])",imgname))
+                id = pIds[matchIndex]
+                Name = pNames[matchIndex]
                 y1, x2, y2, x1 = faceLoc
                 y1, x2, y2, x1 = y1 * 4, x2 * 4, y2 * 4, x1 * 4
                 cv2.rectangle(img, (x1, y1), (x2, y2), (0, 0, 255), 1)
@@ -87,7 +102,7 @@ def getDetails():
         if k == 27:
             break
     cam.release()
-    readRecord(imgname)
+    readRecord(id)
 
 def GUI_init():
     window.minsize(800,600)
@@ -124,8 +139,6 @@ def writeRecord(id,name,age,gender,image_data):
 
 def registeration():
     cam = cv2.VideoCapture(0)
-    cv2.namedWindow("Press Space to Capture and ESC to quit")
-    img_counter = 0
     id = record_collection.count_documents({})+1
     name = Name.get()
     age = Age.get()
@@ -136,7 +149,7 @@ def registeration():
         if not ret:
             print("failed to grab frame")
             break
-        cv2.imshow("test", frame)
+        cv2.imshow("Press Space to Capture and ESC to quit", frame)
 
         k = cv2.waitKey(1)
         if k%256 == 27:
@@ -145,12 +158,6 @@ def registeration():
         elif k%256 == 32:
             _, image_data = cv2.imencode('.jpg', frame)
             image_binary = Binary(image_data.tobytes())
-            #img_name = str(id)+"_"+str(Name.get())+"_{}.png".format(img_counter)
-            #cv2.imwrite("./Images/"+img_name, frame)
-            #print("{} saved ".format(img_name))
-            #img_counter += 1
-            #with open(path+"/"+img_name, 'rb') as file:
-            #    image_data = Binary(file.read())
 
     writeRecord(id,name,age,gender,image_binary)
     cam.release()
