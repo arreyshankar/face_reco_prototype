@@ -79,7 +79,7 @@ def getDetails():
             matches = face_recognition.compare_faces(encodeList, encodeFace)
             faceDis = face_recognition.face_distance(encodeList, encodeFace)
             matchIndex = np.argmin(faceDis)
-
+            print(matchIndex)
             if matches[matchIndex]:
                 id = pIds[matchIndex]
                 Name = pNames[matchIndex]
