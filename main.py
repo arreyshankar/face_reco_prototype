@@ -17,7 +17,6 @@ record_collection = database['records']
 cam = cv2.VideoCapture(0)
 cam.set(cv2.CAP_PROP_FPS,60)
 cam.set(cv2.CAP_PROP_BUFFERSIZE,30)
-path = "C:/Users/longl/Desktop/face_reco_prototype/Images"
 window = tk.Tk()
 Name = tk.StringVar()
 Age = tk.StringVar()
