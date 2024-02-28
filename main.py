@@ -37,7 +37,6 @@ for document in record_collection.find():
     pGenders.append(document['Gender'])
     pImages.append(document['Image'])
 
-
 def getImages():
     for image in pImages:
         nparr = np.frombuffer(image, np.uint8)
@@ -46,8 +45,6 @@ def getImages():
 
 getImages()
 
-
-
 def findEncodings(Images):
     encodeList = []
     for img in Images:
@@ -55,9 +52,6 @@ def findEncodings(Images):
         encode = face_recognition.face_encodings(img)[0]
         encodeList.append(encode)
     return encodeList
-
-encodeListKnown = findEncodings(Images)
-print('Encoding Complete')
 
 def readRecord(id):
     result = record_collection.find_one({'_id':int(id)})
@@ -96,7 +90,7 @@ def getDetails():
                 y1, x2, y2, x1 = y1 * 4, x2 * 4, y2 * 4, x1 * 4
                 cv2.rectangle(img, (x1, y1), (x2, y2), (0, 0, 255), 1)
                 cv2.putText(img, Name, (x1 + 6, y2 - 6), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 1)        
-    
+                print("ID :: ",id)
         cv2.imshow('Webcam', img)
         k = cv2.waitKey(3000) & 0xff 
         if k == 27:
@@ -160,6 +154,7 @@ def registeration():
             image_binary = Binary(image_data.tobytes())
 
     writeRecord(id,name,age,gender,image_binary)
+    tkinter.messagebox.showinfo("Alert","Registration Successfull")
     cam.release()
     cv2.destroyAllWindows()
 
