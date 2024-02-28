@@ -1,7 +1,9 @@
 import tkinter as tk
 import numpy as np
+from PIL import Image, ImageTk
 from pymongo.server_api import ServerApi
 import re
+from bson.binary import Binary
 import pymongo
 import tkinter.messagebox
 import face_recognition
@@ -11,11 +13,12 @@ import os
 uri = "mongodb+srv://sarvesh:mevo123@testingcluster.tg9uqrx.mongodb.net/?retryWrites=true&w=majority&appName=TestingCluster"
 client = pymongo.MongoClient(uri,server_api=ServerApi('1'))
 database = client['mevo']
-collection = database['records']
+record_collection = database['records']
+images_collection = database['images']
 cam = cv2.VideoCapture(0)
 cam.set(cv2.CAP_PROP_FPS,60)
 cam.set(cv2.CAP_PROP_BUFFERSIZE,30)
-path = "C:/Users/sarvesh/Desktop/face_reco_prototype/Images"
+path = "C:/Users/longl/Desktop/face_reco_prototype/Images"
 window = tk.Tk()
 Name = tk.StringVar()
 Age = tk.StringVar()
@@ -45,13 +48,15 @@ def readRecord(name):
     id = re.findall(r'\d+',name)
     id = int(id[0])
     
-    result = collection.find_one({'id':int(id)})
+    result = record_collection.find_one({'_id':int(id)})
     
-    Pid = result['id']
+    Pid = result['_id']
     PName = result['Name']
     PAge = result['Age']
     pGender = result['Gender']
-    tkinter.messagebox.showinfo("Details","ID: "+str(Pid)+"\nName: "+PName+"\nAge: "+str(PAge)+"\nGender: "+pGender)
+    pImage = result['Image']
+    tkinter.messagebox.showinfo("Details","\nID: "+str(Pid)+"\nName: "+PName+"\nAge: "+str(PAge)+"\nGender: "+pGender)
+
     
 def getDetails():
     cam = cv2.VideoCapture(0)
@@ -112,21 +117,19 @@ def GUI_init():
     getDetailsButton.pack(side=tk.LEFT,padx=10) 
     window.mainloop()
 
-def writeRecord(id,name,age,gender):
+def writeRecord(id,name,age,gender,image_data):
     
-    record = {'id':id , 'Name':name , 'Age':int(age) , 'Gender':gender}
-    collection.insert_one(record)
+    record = {'_id':id , 'Name':name , 'Age':int(age) , 'Gender':gender , 'Image':image_data}
+    record_collection.insert_one(record)
 
 def registeration():
     cam = cv2.VideoCapture(0)
     cv2.namedWindow("Press Space to Capture and ESC to quit")
     img_counter = 0
-    id = collection.count_documents({})+1
+    id = record_collection.count_documents({})+1
     name = Name.get()
     age = Age.get()
     gender = Gender.get()
-    
-    writeRecord(id,name,age,gender)
     
     while True:
         ret, frame = cam.read()
@@ -140,11 +143,16 @@ def registeration():
             print("Escape hit, closing...")
             break
         elif k%256 == 32:
-            img_name = str(id)+"_"+str(Name.get())+"_{}.png".format(img_counter)
-            cv2.imwrite("./Images/"+img_name, frame)
-            print("{} saved ".format(img_name))
-            img_counter += 1
+            _, image_data = cv2.imencode('.jpg', frame)
+            image_binary = Binary(image_data.tobytes())
+            #img_name = str(id)+"_"+str(Name.get())+"_{}.png".format(img_counter)
+            #cv2.imwrite("./Images/"+img_name, frame)
+            #print("{} saved ".format(img_name))
+            #img_counter += 1
+            #with open(path+"/"+img_name, 'rb') as file:
+            #    image_data = Binary(file.read())
 
+    writeRecord(id,name,age,gender,image_binary)
     cam.release()
     cv2.destroyAllWindows()
 
